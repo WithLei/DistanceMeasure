@@ -1,18 +1,85 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    android:orientation="vertical">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Hello World!"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+    <include layout="@layout/my_toolbar" />
 
-</android.support.constraint.ConstraintLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <TextView
+            android:id="@+id/tv_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="00:00.00"
+            android:textSize="30sp" />
+
+        <TextView
+            android:id="@+id/tv_distance"
+            android:layout_width="match_parent"
+            android:layout_height="80dp"
+            android:gravity="center_vertical"
+            android:text="滑动距离： 3 cm"
+            android:textSize="40dp" />
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/btn_main_heigth"
+            android:layout_marginTop="10dp">
+
+            <FrameLayout
+                android:id="@+id/btn_left"
+                android:layout_width="@dimen/btn_main_heigth"
+                android:layout_height="@dimen/btn_main_heigth"
+                android:layout_gravity="start">
+
+                <ImageView
+                    android:id="@+id/iv_leftbtn"
+                    android:layout_width="@dimen/btn_main_heigth"
+                    android:layout_height="@dimen/btn_main_heigth"
+                    android:src="@drawable/shape_btn_left_enable" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="复位"
+                    android:textColor="@color/white"
+                    android:textSize="17sp" />
+            </FrameLayout>
+
+            <FrameLayout
+                android:id="@+id/btn_right"
+                android:layout_width="@dimen/btn_main_heigth"
+                android:layout_height="@dimen/btn_main_heigth"
+                android:layout_gravity="end">
+
+                <ImageView
+                    android:id="@+id/iv_rightbtn"
+                    android:layout_width="@dimen/btn_main_heigth"
+                    android:layout_height="@dimen/btn_main_heigth"
+                    android:src="@drawable/shape_btn_right_normal" />
+
+                <TextView
+                    android:id="@+id/tv_rightbtn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="启动"
+                    android:textColor="@color/white"
+                    android:textSize="17sp" />
+            </FrameLayout>
+        </FrameLayout>
+
+        <ListView
+            android:id="@+id/lv_main"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginTop="30dp"/>
+    </LinearLayout>
+</LinearLayout>
