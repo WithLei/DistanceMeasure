@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingTop="10dp"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="45dp"
+        android:background="@color/white"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:paddingLeft="10dp">
+
+        <TextView
+            android:layout_width="120dp"
+            android:layout_height="35dp"
+            android:gravity="center_vertical"
+            android:text="车牌/车架号"
+            android:textColor="@color/text_color_sec"
+            android:textSize="16sp" />
+
+        <EditText
+            android:id="@+id/et_carid"
+            android:layout_width="match_parent"
+            android:layout_height="35dp"
+            android:background="@color/white"
+            android:layout_marginLeft="10dp"
+            android:cursorVisible="true"
+            android:gravity="center"
+            android:hint="请输入车牌/车架号"
+            android:textSize="16sp"
+            android:padding="5dp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="45dp"
+        android:layout_marginTop="10dp"
+        android:background="@color/white"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:paddingLeft="10dp">
+
+        <TextView
+            android:layout_width="120dp"
+            android:layout_height="35dp"
+            android:gravity="center_vertical"
+            android:text="车辆朝向"
+            android:textColor="@color/text_color_sec"
+            android:textSize="16sp" />
+
+        <Spinner
+            android:id="@+id/spinner"
+            android:layout_width="match_parent"
+            android:layout_height="35dp"
+            android:layout_gravity="center"
+            android:layout_marginLeft="20dp"
+            android:dropDownWidth="match_parent"
+            android:entries="@array/carDirection"
+            android:popupBackground="@color/white"
+            android:textAlignment="center" />
+    </LinearLayout>
+</LinearLayout>

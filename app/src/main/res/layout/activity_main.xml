@@ -12,20 +12,36 @@
         android:orientation="vertical"
         android:padding="20dp">
 
-        <TextView
+        <Chronometer
             android:id="@+id/tv_time"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="00:00.00"
+            android:format="00:00:00"
+            android:textColor="@color/text_color_pri"
             android:textSize="30sp" />
 
-        <TextView
-            android:id="@+id/tv_distance"
+        <LinearLayout
             android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+        <TextView
+            android:layout_width="wrap_content"
             android:layout_height="80dp"
             android:gravity="center_vertical"
-            android:text="滑动距离： 3 cm"
+            android:textColor="@color/gray_light"
+            android:text="滑动距离："
             android:textSize="40dp" />
+
+            <TextView
+                android:id="@+id/tv_distance"
+                android:layout_width="match_parent"
+                android:layout_height="80dp"
+                android:gravity="center_vertical"
+                android:textColor="@color/text_color_sec"
+                android:text="3 cm"
+                android:textSize="40dp" />
+
+        </LinearLayout>
 
         <FrameLayout
             android:layout_width="match_parent"
@@ -42,7 +58,7 @@
                     android:id="@+id/iv_leftbtn"
                     android:layout_width="@dimen/btn_main_heigth"
                     android:layout_height="@dimen/btn_main_heigth"
-                    android:src="@drawable/shape_btn_left_enable" />
+                    android:src="@drawable/shape_btn_left_unenable" />
 
                 <TextView
                     android:layout_width="wrap_content"
