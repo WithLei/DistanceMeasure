@@ -8,6 +8,7 @@ import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
+import android.bluetooth.BluetoothSocket;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -25,15 +26,21 @@ import android.widget.Toast;
 
 import com.android.renly.distancemeasure.R;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import butterknife.Unbinder;
+
+import static android.content.ContentValues.TAG;
 
 public class MainActivity extends Activity {
 
@@ -125,76 +132,75 @@ public class MainActivity extends Activity {
     /**
      * 初始化蓝牙模块
      */
-    private void initBluetooth() {
-        mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        mBluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
-        if (mBluetoothAdapter == null){
-            Toast.makeText(this, "当前手机不支持蓝牙功能", Toast.LENGTH_SHORT).show();
-            finish();
-        }
-        if (!mBluetoothAdapter.isEnabled()) {
-            //若没打开则打开蓝牙
-            mBluetoothAdapter.enable();
-            Toast.makeText(this, "打开蓝牙", Toast.LENGTH_SHORT).show();
-        }
-        bluetoothDevice = mBluetoothAdapter.getRemoteDevice("80:AD:16:DB:3B:4D");
-//        bluetoothDevice = mBluetoothAdapter.getRemoteDevice("20:18:06:14:10:73");
-        //如果Gatt在运行,将其关闭
-        if (mBluetoothGatt != null) {
-            mBluetoothGatt.close();
-            mBluetoothGatt = null;
-        }
-        //连接蓝牙设备并获取Gatt对象hhj
-        mBluetoothGatt = bluetoothDevice.connectGatt(MainActivity.this, true, bluetoothGattCallback);
-    }
+//    private void initBluetooth() {
+//        mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+//        mBluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
+//        if (mBluetoothAdapter == null){
+//            Toast.makeText(this, "当前手机不支持蓝牙功能", Toast.LENGTH_SHORT).show();
+//            finish();
+//        }
+//        if (!mBluetoothAdapter.isEnabled()) {
+//            //若没打开则打开蓝牙
+//            mBluetoothAdapter.enable();
+//            Toast.makeText(this, "打开蓝牙", Toast.LENGTH_SHORT).show();
+//        }
+////        bluetoothDevice = mBluetoothAdapter.getRemoteDevice("80:AD:16:DB:3B:4D");
+//        bluetoothDevice = mBluetoothAdapter.getRemoteDevice("AC:2B:6E:1F:CE:89");
+////        bluetoothDevice = mBluetoothAdapter.getRemoteDevice("20:18:06:14:10:73");
+//        //如果Gatt在运行,将其关闭
+//        if (mBluetoothGatt != null) {
+//            Log.e("print","mBluetoothGatt != null");
+//            mBluetoothGatt.disconnect();
+//            mBluetoothGatt.close();
+//            mBluetoothGatt = null;
+//        }
+//        //连接蓝牙设备并获取Gatt对象hhj
+//        mBluetoothGatt = bluetoothDevice.connectGatt(MainActivity.this, false, bluetoothGattCallback);
+//    }
 
     /**
      * 蓝牙返回数据函数
      */
-    private BluetoothGattCallback bluetoothGattCallback = new BluetoothGattCallback() {
-        @Override
-        public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
-            Log.e("print","111");
-            if (status == BluetoothGatt.GATT_SUCCESS) {
-                if (newState == BluetoothProfile.STATE_CONNECTED) {
-                    Log.e("print","设备连接成功");
-
-                    //搜索Service
-                    gatt.discoverServices();
-                } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
-                    Log.e("print","设备连接断开");
-                }
-            }else if(status == BluetoothGatt.GATT_FAILURE)
-                Log.e("print","设备连接失败");
-            else
-                Log.e("print","设备其他原因连接失败" );
-            Log.e("print","status" + status);
-            Log.e("print","newState" + newState);
-            super.onConnectionStateChange(gatt, status, newState);
-        }
-
-        @Override
-        public void onServicesDiscovered(BluetoothGatt gatt, int status) {
-            //根据UUID获取Service中的Characteristic,并传入Gatt中
-//            BluetoothGattService bluetoothGattService = gatt.getService(UUID_SERVICE);
-//            BluetoothGattCharacteristic bluetoothGattCharacteristic = bluetoothGattService.getCharacteristic(UUID_NOTIFY);
+//    private BluetoothGattCallback bluetoothGattCallback = new BluetoothGattCallback() {
+//        @Override
+//        public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
+//            if (newState == BluetoothProfile.STATE_CONNECTED){
+//                // 已连接状态，表明连接成功
+//                printLog("连接成功 newState=2");
 //
-//            boolean isConnect = gatt.setCharacteristicNotification(bluetoothGattCharacteristic, true);
-//            if (isConnect){
-//
-//            }else {
-//                Log.i("geanwen", "onServicesDiscovered: 设备一连接notify失败");
 //            }
-            super.onServicesDiscovered(gatt, status);
-        }
-
-        @Override
-        public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {//数据改变
-            super.onCharacteristicChanged(gatt, characteristic);
-            String data = new String(characteristic.getValue());
-            Log.i("print", "onCharacteristicChanged: " + data);
-        }
-    };
+//            if(newState == BluetoothProfile.STATE_DISCONNECTED){
+//                printLog("连接失败 newState=0");
+//                return;
+//            }
+//
+//            gatt.disconnect();
+//            gatt.close();
+//            return;
+//        }
+//
+//        @Override
+//        public void onServicesDiscovered(BluetoothGatt gatt, int status) {
+//            //根据UUID获取Service中的Characteristic,并传入Gatt中
+////            BluetoothGattService bluetoothGattService = gatt.getService(UUID_SERVICE);
+////            BluetoothGattCharacteristic bluetoothGattCharacteristic = bluetoothGattService.getCharacteristic(UUID_NOTIFY);
+////
+////            boolean isConnect = gatt.setCharacteristicNotification(bluetoothGattCharacteristic, true);
+////            if (isConnect){
+////
+////            }else {
+////                Log.i("geanwen", "onServicesDiscovered: 设备一连接notify失败");
+////            }
+//            super.onServicesDiscovered(gatt, status);
+//        }
+//
+//        @Override
+//        public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {//数据改变
+//            super.onCharacteristicChanged(gatt, characteristic);
+//            String data = new String(characteristic.getValue());
+//            Log.i("print", "onCharacteristicChanged: " + data);
+//        }
+//    };
 
     private void initData() {
         Intent intent = getIntent();
@@ -324,11 +330,183 @@ public class MainActivity extends Activity {
         }
     };
 
+    private void printLog(String str){
+        Log.e("print",str);
+    }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
         unbinder.unbind();
+        mConnectThread.cancel();
+        mConnectedThread.cancel();
+    }
+
+    private ConnectThread mConnectThread;
+    public ConnectedThread mConnectedThread;
+
+    private List<Integer> mBuffer;
+    private static final String SPP_UUID = "00001101-0000-1000-8000-00805F9B34FB";
+
+    public void initBluetooth(){
+        mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        // If the adapter is null, then Bluetooth is not supported
+        if (mBluetoothAdapter == null) {
+            Toast.makeText(this, "Bluetooth is not available", Toast.LENGTH_LONG).show();
+            finish();
+            return;
+        }
+
+        mBuffer = new ArrayList<Integer>();
+        BluetoothDevice bluetoothDevice = mBluetoothAdapter.getRemoteDevice("20:18:06:14:10:73");
+        connect(bluetoothDevice);
+    }
+
+    public void connect(BluetoothDevice device) {
+        printLog("connnct()");
+        printLog("connect to: " + device);
+        // Start the thread to connect with the given device
+        mConnectThread = new ConnectThread(device);
+        mConnectThread.start();
+    }
+
+    /**
+     * This thread runs while attempting to make an outgoing connection with a
+     * device. It runs straight through; the connection either succeeds or
+     * fails.
+     */
+    private class ConnectThread extends Thread {
+        private final BluetoothSocket mmSocket;
+        private final BluetoothDevice mmDevice;
+
+        public ConnectThread(BluetoothDevice device) {
+            mmDevice = device;
+            BluetoothSocket tmp = null;
+
+            // Get a BluetoothSocket for a connection with the
+            // given BluetoothDevice
+            try {
+                tmp = device.createRfcommSocketToServiceRecord(UUID.fromString(SPP_UUID));
+            } catch (IOException e) {
+                printLog("create() failed"+e);
+            }
+            mmSocket = tmp;
+        }
+
+        public void run() {
+            printLog("BEGIN mConnectThread");
+            setName("ConnectThread");
+
+            // Always cancel discovery because it will slow down a connection
+            mBluetoothAdapter.cancelDiscovery();
+
+            // Make a connection to the BluetoothSocket
+            try {
+                // This is a blocking call and will only return on a
+                // successful connection or an exception
+                mmSocket.connect();
+            } catch (IOException e) {
+
+                printLog("unable to connect() socket"+ e);
+                // Close the socket
+                try {
+                    mmSocket.close();
+                } catch (IOException e2) {
+                    printLog("unable to close() socket during connection failure"+e2);
+                }
+                return;
+            }
+
+            mConnectThread = null;
+
+            // Start the connected thread
+            // Start the thread to manage the connection and perform
+            // transmissions
+            mConnectedThread = new ConnectedThread(mmSocket);
+            mConnectedThread.start();
+
+        }
+
+        public void cancel() {
+            try {
+                mmSocket.close();
+            } catch (IOException e) {
+                printLog("close() of connect socket failed"+e);
+            }
+        }
+    }
+
+    /**
+     * This thread runs during a connection with a remote device. It handles all
+     * incoming and outgoing transmissions.
+     */
+    private class ConnectedThread extends Thread {
+        private final BluetoothSocket mmSocket;
+        private final InputStream mmInStream;
+        private final OutputStream mmOutStream;
+
+        public ConnectedThread(BluetoothSocket socket) {
+            printLog("create ConnectedThread");
+            mmSocket = socket;
+            InputStream tmpIn = null;
+            OutputStream tmpOut = null;
+
+            // Get the BluetoothSocket input and output streams
+            try {
+                tmpIn = socket.getInputStream();
+                tmpOut = socket.getOutputStream();
+            } catch (IOException e) {
+                printLog("temp sockets not created"+e);
+            }
+
+            mmInStream = tmpIn;
+            mmOutStream = tmpOut;
+        }
+
+        public void run() {
+            printLog("BEGIN mConnectedThread");
+            byte[] buffer = new byte[256];
+            int bytes;
+
+            // Keep listening to the InputStream while connected
+            while (true) {
+                try {
+                    // Read from the InputStream
+                    bytes = mmInStream.read(buffer);
+                    synchronized (mBuffer) {
+                        for (int i = 0; i < bytes; i++) {
+                            mBuffer.add(buffer[i] & 0xFF);
+                        }
+                    }
+                    // mHandler.sendEmptyMessage(MSG_NEW_DATA);
+                } catch (IOException e) {
+                    printLog("disconnected"+e);
+                    break;
+                }
+            }
+        }
+
+        /**
+         * Write to the connected OutStream.
+         *
+         * @param buffer
+         *            The bytes to write
+         */
+        public void write(byte[] buffer) {
+            try {
+                mmOutStream.write(buffer);
+            } catch (IOException e) {
+                Log.e(TAG, "Exception during write", e);
+            }
+        }
+
+        public void cancel() {
+            try {
+                mmSocket.close();
+            } catch (IOException e) {
+                Log.e(TAG, "close() of connect socket failed", e);
+            }
+        }
     }
 
 }
