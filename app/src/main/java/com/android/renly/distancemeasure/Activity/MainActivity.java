@@ -4,10 +4,7 @@ import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
-import android.bluetooth.BluetoothGattCallback;
-import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothManager;
-import android.bluetooth.BluetoothProfile;
 import android.bluetooth.BluetoothSocket;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -95,6 +92,15 @@ public class MainActivity extends Activity {
     private static final int SUCCESS_MEASURE = 2;
     private static final int FAIL_MEASURE = 3;
     private int measureResult = NOT_MEASURE;
+
+    private String carid;
+    private String carDirection;
+    private int startDistance;
+    private int nowDistance;
+    private String result;
+    private String measureTime;
+    private String theTime;
+    private int theID;
 
     private String[] keys = new String[]{
             "车牌/车架号：",
@@ -203,9 +209,28 @@ public class MainActivity extends Activity {
 //    };
 
     private void initData() {
+        title.setText("实验测量");
         Intent intent = getIntent();
-        values[0] = intent.getStringExtra("cardId");
-        values[1] = intent.getStringExtra("direction");
+        if (intent.getBooleanExtra("isNewMeasure",false)){
+            // 新的实验
+            values[0] = intent.getStringExtra("cardId");
+            values[1] = intent.getStringExtra("direction");
+        }else{
+            // 历史实验
+            values[0] = intent.getStringExtra("cardId");
+            values[1] = intent.getStringExtra("direction");
+            startDistance = intent.getIntExtra("startDirection",0);
+            values[2] = startDistance + "cm";
+            nowDistance = intent.getIntExtra("nowDirection",0);
+            values[3] = nowDistance + "cm";
+            values[4] = intent.getStringExtra("result");
+            int x = nowDistance - startDistance;
+            tvDistance.setText(x + " cm");
+            theID = intent.getIntExtra("theID",0);
+
+            State_btn_left = true;
+            ivLeftbtn.setImageDrawable(getDrawable(R.drawable.shape_btn_left_enable));
+        }
         list = new ArrayList<>();
         for (int i = 0; i < keys.length; i++) {
             Map<String, String> objectMap = new HashMap<>();
@@ -243,7 +268,7 @@ public class MainActivity extends Activity {
      */
     private void recreateTimer() {
         if (State_btn_left) {
-            tvDistance.setText("3 cm");
+            tvDistance.setText("0 cm");
             timer.setBase(SystemClock.elapsedRealtime()); //计数器清零
             ivLeftbtn.setImageDrawable(getDrawable(R.drawable.shape_btn_left_unenable));
             list.get(4).put("key","测量结果：");
@@ -336,10 +361,18 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onDestroy() {
-        super.onDestroy();
         unbinder.unbind();
-        mConnectThread.cancel();
-        mConnectedThread.cancel();
+        if (mConnectThread != null)
+            mConnectThread.cancel();
+        if (mConnectedThread != null)
+            mConnectedThread.cancel();
+        saveMeasureData();
+        super.onDestroy();
+    }
+
+    private void saveMeasureData() {
+        // 需要重写
+        setResult(RESULT_OK);
     }
 
     private ConnectThread mConnectThread;
@@ -508,5 +541,6 @@ public class MainActivity extends Activity {
             }
         }
     }
+
 
 }

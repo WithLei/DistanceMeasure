@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@color/white"
+    android:padding="10dp">
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <TextView
+            style="@style/text_16_sec"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="车牌/车架号：" />
+
+        <TextView
+            android:id="@+id/carid"
+            style="@style/text_16_pri"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="浙A 123456" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            style="@style/text_16_sec"
+            android:text="总时长：" />
+
+        <TextView
+            android:id="@+id/measureTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            style="@style/text_16_pri"
+            android:text="00:00:05" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            style="@style/text_16_sec"
+            android:text="测量结果：" />
+
+        <TextView
+            android:id="@+id/result"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            style="@style/text_16_pri"
+            android:text="未测量" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/time"
+        android:layout_gravity="end"
+        style="@style/text_18_pri"
+        android:textColor="@color/colorAccent"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="2018.9.22 16:27" />
+
+</LinearLayout>
