@@ -11,6 +11,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="车牌/车架号："
+        android:background="?attr/selectableItemBackground"
+        android:textIsSelectable="true"
         android:textColor="@color/text_color_pri"
         android:textSize="16sp" />
     <TextView
@@ -19,6 +21,8 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="5dp"
         android:text="浙A 123456"
+        android:background="?attr/selectableItemBackground"
+        android:textIsSelectable="true"
         android:textColor="@color/text_color_sec"
         android:textSize="16sp" />
 </LinearLayout>

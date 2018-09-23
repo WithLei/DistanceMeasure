@@ -62,4 +62,43 @@
             android:popupBackground="@color/white"
             android:textAlignment="center" />
     </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="45dp"
+        android:background="@color/white"
+        android:layout_marginTop="10dp"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:paddingLeft="10dp">
+
+        <TextView
+            android:layout_width="120dp"
+            android:layout_height="35dp"
+            android:gravity="center_vertical"
+            android:text="蓝牙MAC地址"
+            android:textColor="@color/text_color_sec"
+            android:textSize="16sp" />
+
+        <EditText
+            android:id="@+id/MAC_addr"
+            android:layout_width="match_parent"
+            android:layout_height="35dp"
+            android:background="@color/white"
+            android:layout_marginLeft="10dp"
+            android:cursorVisible="true"
+            android:gravity="center"
+            android:text="@string/MACAddr_default"
+            android:hint="请输入蓝牙MAC地址"
+            android:textSize="16sp"
+            android:padding="5dp" />
+    </LinearLayout>
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        style="@style/text_16_sec"
+        android:textSize="14dp"
+        android:text="@string/notice"
+        android:layout_gravity="center"/>
 </LinearLayout>

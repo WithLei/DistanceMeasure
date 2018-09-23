@@ -21,6 +21,7 @@ public class experimentAdapter extends RecyclerView.Adapter<experimentAdapter.Vi
     private Context mContext;
     private List<MeasureData> list;
     private MyItemClickListener listener;
+    private MyItemLongClickListener longClickListener;
 
     public experimentAdapter(Context mContext, List<MeasureData> list) {
         this.mContext = mContext;
@@ -31,7 +32,7 @@ public class experimentAdapter extends RecyclerView.Adapter<experimentAdapter.Vi
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(mContext).inflate(R.layout.item_experiment,parent,false);
-        return new ViewHolder(view,listener);
+        return new ViewHolder(view,listener,longClickListener);
     }
 
     @Override
@@ -63,21 +64,25 @@ public class experimentAdapter extends RecyclerView.Adapter<experimentAdapter.Vi
         notifyItemInserted(position);
     }
 
-    public class ViewHolder extends RecyclerView.ViewHolder implements AnimateViewHolder,View.OnClickListener{
+    public class ViewHolder extends RecyclerView.ViewHolder
+            implements AnimateViewHolder,View.OnClickListener, View.OnLongClickListener{
         private TextView carid;
         private TextView measureTime;
         private TextView result;
         private TextView time;
         private MyItemClickListener listener;
+        private MyItemLongClickListener longClickListener;
 
-        public ViewHolder(View itemView,MyItemClickListener listener) {
+        public ViewHolder(View itemView,MyItemClickListener listener,MyItemLongClickListener longClickListener) {
             super(itemView);
             carid = itemView.findViewById(R.id.carid);
             measureTime = itemView.findViewById(R.id.measureTime);
             result = itemView.findViewById(R.id.result);
             time = itemView.findViewById(R.id.time);
             this.listener = listener;
+            this.longClickListener = longClickListener;
             itemView.setOnClickListener(this);
+            itemView.setOnLongClickListener(this);
         }
 
 
@@ -117,13 +122,29 @@ public class experimentAdapter extends RecyclerView.Adapter<experimentAdapter.Vi
                 listener.onItemClick(view,getPosition());
             }
         }
+
+        @Override
+        public boolean onLongClick(View view) {
+            if (longClickListener != null){
+                longClickListener.onItemLongClick(view,getPosition());
+            }
+            // return true 已经处理完事件
+            return true;
+        }
     }
 
     public interface MyItemClickListener{
         void onItemClick(View view, int pos);
     }
 
+    public interface MyItemLongClickListener{
+        void onItemLongClick(View view, int pos);
+    }
+
     public void setItemClickListener(MyItemClickListener listener){
         this.listener = listener;
+    }
+    public void setItemLongClickListener(MyItemLongClickListener longClickListener){
+        this.longClickListener = longClickListener;
     }
 }

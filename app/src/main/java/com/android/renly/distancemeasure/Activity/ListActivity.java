@@ -49,11 +49,12 @@ public class ListActivity extends Activity {
     private View dialogView;
     private EditText et_carId;
     private Spinner spinner;
+    private EditText et_MACAddr;
     private experimentAdapter adapter;
 
     private Unbinder unbinder;
 
-    private List<MeasureData>experimentList = new ArrayList<>();
+    private List<MeasureData>experimentList;
     private static MySQLiteOpenHelper mySQLiteOpenHelper;
     private static SQLiteDatabase db;
 
@@ -68,6 +69,7 @@ public class ListActivity extends Activity {
     }
 
     private void queryDB() {
+        experimentList = new ArrayList<>();
         mySQLiteOpenHelper = MySQLiteOpenHelper.getInstance(this);
         db = mySQLiteOpenHelper.getWritableDatabase();
         if (App.isFirstIn(this)){
@@ -82,7 +84,7 @@ public class ListActivity extends Activity {
             Cursor cursor = db.query(MySQLiteOpenHelper.TABLE_NAME,null,null,null,null,null,null);
 
             // 判断游标是否为空
-            if (cursor.moveToFirst()){
+            if (cursor.moveToLast()){
                 // 遍历游标
                 do {
                     String carid = cursor.getString(cursor.getColumnIndex(MySQLiteOpenHelper.carId));
@@ -96,7 +98,7 @@ public class ListActivity extends Activity {
 
                     MeasureData data = new MeasureData(carid,carDirection,startDistance,nowDistance,result,measureTime,theTime,theID);
                     experimentList.add(data);
-                }while (cursor.moveToNext());
+                }while (cursor.moveToPrevious());
             }
             cursor.close();
         }
@@ -109,24 +111,24 @@ public class ListActivity extends Activity {
     }
 
     private void insertDB() {
-        MeasureData data1 = new MeasureData("测试车牌号01","向下",1,7,"测量失败","00:00:17","2018.8.11 13:24",1);
-        MeasureData data2 = new MeasureData("测试车牌号02","向上",2,3,"测量成功","00:00:12","2018.4.27 17:35",2);
-        MeasureData data3 = new MeasureData("测试车牌号03","向上",0,3,"未测量","00:00:13","2018.6.3 9:08",3);
-        MeasureData data4 = new MeasureData("测试车牌号04","向上",0,3,"测量成功","00:00:12","2018.4.27 13:24",4);
-        MeasureData data5 = new MeasureData("测试车牌号05","向上",0,3,"测量成功","00:00:12","2018.4.27 13:24",5);
-
-        synchronized (mySQLiteOpenHelper) {
-            db.beginTransaction();
-
-            db.execSQL(insertsql(data1));
-            db.execSQL(insertsql(data2));
-            db.execSQL(insertsql(data3));
-            db.execSQL(insertsql(data4));
-            db.execSQL(insertsql(data5));
-
-            db.setTransactionSuccessful();
-            db.endTransaction();
-        }
+//        MeasureData data1 = new MeasureData("测试车牌号01","向下",1,7,"测量失败","00:00:17","2018.8.11 13:24",1);
+//        MeasureData data2 = new MeasureData("测试车牌号02","向上",2,3,"测量成功","00:00:12","2018.4.27 17:35",2);
+//        MeasureData data3 = new MeasureData("测试车牌号03","向上",0,3,"未测量","00:00:13","2018.6.3 9:08",3);
+//        MeasureData data4 = new MeasureData("测试车牌号04","向上",0,3,"测量成功","00:00:12","2018.4.27 13:24",4);
+//        MeasureData data5 = new MeasureData("测试车牌号05","向上",0,3,"测量成功","00:00:12","2018.4.27 13:24",5);
+//
+//        synchronized (mySQLiteOpenHelper) {
+//            db.beginTransaction();
+//
+//            db.execSQL(insertsql(data1));
+//            db.execSQL(insertsql(data2));
+//            db.execSQL(insertsql(data3));
+//            db.execSQL(insertsql(data4));
+//            db.execSQL(insertsql(data5));
+//
+//            db.setTransactionSuccessful();
+//            db.endTransaction();
+//        }
 
         App.setFirst_In(this,false);
     }
@@ -151,6 +153,21 @@ public class ListActivity extends Activity {
                 data.getTime() + "')";
     }
 
+    private void deleteDB(MeasureData data){
+        db = mySQLiteOpenHelper.getWritableDatabase();
+        db.beginTransaction();
+
+        db.execSQL(deletesql(data.getTheID()));
+
+        db.setTransactionSuccessful();
+        db.endTransaction();
+    }
+
+    private String deletesql(int theID) {
+        return "delete from " + MySQLiteOpenHelper.TABLE_NAME +
+                " where " + MySQLiteOpenHelper.theID + " = " + theID;
+    }
+
     private void initView() {
         // 增加分割线
         recyclerView.addItemDecoration(new DividerItemDecoration(this, DividerItemDecoration.VERTICAL));
@@ -167,12 +184,11 @@ public class ListActivity extends Activity {
         recyclerView.getItemAnimator().setChangeDuration(1000);
 
         // 插值器
-        SlideInLeftAnimator animator = new SlideInLeftAnimator();
-        animator.setInterpolator(new OvershootInterpolator());
-        recyclerView.setItemAnimator(animator);
+//        SlideInLeftAnimator animator = new SlideInLeftAnimator();
+//        animator.setInterpolator(new OvershootInterpolator());
+//        recyclerView.setItemAnimator(animator);
 
         adapter = new experimentAdapter(this,experimentList);
-        Log.e("print","adapter.getItemCount " + adapter.getItemCount());
         recyclerView.setAdapter(new AlphaInAnimationAdapter(adapter));
         adapter.setItemClickListener(new experimentAdapter.MyItemClickListener() {
             @Override
@@ -183,6 +199,7 @@ public class ListActivity extends Activity {
                 intent.putExtra("cardId",obj.getCarId());
                 intent.putExtra("direction",obj.getCarDirection());
                 intent.putExtra("startDirection",obj.getStartDistance());
+                intent.putExtra("measureTime",obj.getMeasureTime());
                 intent.putExtra("nowDirection",obj.getNowDistance());
                 intent.putExtra("result",obj.getResult());
                 intent.putExtra("theID",obj.getTheID());
@@ -190,27 +207,46 @@ public class ListActivity extends Activity {
             }
         });
 
+        adapter.setItemLongClickListener(new experimentAdapter.MyItemLongClickListener() {
+            @Override
+            public void onItemLongClick(View view, final int pos) {
+                new AlertDialog.Builder(ListActivity.this)
+                        .setTitle("请选择")
+                        .setItems(R.array.menu, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialogInterface, int i) {
+                                deleteDB(experimentList.get(pos));
+                                adapter.remove(pos);
+                            }
+                        })
+                        .create()
+                        .show();
+            }
+        });
+
         recyclerView.setLayoutManager(new LinearLayoutManager(this,LinearLayoutManager.VERTICAL,false));
     }
-
 
 
     private void initDialog() {
         dialogView = View.inflate(this, R.layout.dialog_add, null);
         et_carId = dialogView.findViewById(R.id.et_carid);
         spinner = dialogView.findViewById(R.id.spinner);
+        et_MACAddr = dialogView.findViewById(R.id.MAC_addr);
         new AlertDialog.Builder(this)
                 .setView(dialogView)
                 .setPositiveButton("确认", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
                         String carId = et_carId.getText().toString();
+                        String MACAddr = et_MACAddr.getText().toString();
                         if (TextUtils.isEmpty(carId))
                             Toast.makeText(ListActivity.this, "请确认输入所有数据", Toast.LENGTH_SHORT).show();
                         else {
                             Intent intent = new Intent(ListActivity.this, MainActivity.class);
                             intent.putExtra("cardId", carId);
                             intent.putExtra("direction", spinner.getSelectedItem().toString());
+                            intent.putExtra("MACAddr",MACAddr);
                             intent.putExtra("isNewMeasure",true);
                             startActivityForResult(intent, MainActivity.REQUEST_CODE);
                         }
@@ -235,16 +271,26 @@ public class ListActivity extends Activity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
         if (resultCode == RESULT_OK) {
             switch (requestCode) {
                 case MainActivity.REQUEST_CODE:
                     // 刷新列表
-//                    MeasureData measureData = new MeasureData();
-//                    adapter.add(measureData,0);
+                    recreate();
+//                    Log.e("print","onActivityResult()");
+//                    queryDB();
+//                    adapter.notifyItemChanged(experimentList.size()-1);
+//                    Log.e("print","experimentList.size()" + experimentList.size());
                     break;
             }
         }
+        super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        queryDB();
+        adapter.notifyDataSetChanged();
     }
 
     @Override

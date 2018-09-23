@@ -45,6 +45,16 @@ public class MeasureData {
         this.theID = ID;
     }
 
+    public MeasureData(String carId, String carDirection, int startDistance, int nowDistance, String result, String measureTime, String time) {
+        this.carId = carId;
+        this.carDirection = carDirection;
+        this.startDistance = startDistance;
+        this.nowDistance = nowDistance;
+        this.result = result;
+        this.measureTime = measureTime;
+        this.time = time;
+    }
+
     public MeasureData() {
     }
 

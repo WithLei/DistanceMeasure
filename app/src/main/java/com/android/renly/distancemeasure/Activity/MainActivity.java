@@ -1,15 +1,16 @@
 package com.android.renly.distancemeasure.Activity;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothGatt;
-import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothSocket;
-import android.content.BroadcastReceiver;
-import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.os.SystemClock;
 import android.util.Log;
 import android.view.View;
@@ -21,12 +22,17 @@ import android.widget.SimpleAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.renly.distancemeasure.App;
+import com.android.renly.distancemeasure.Bean.MeasureData;
+import com.android.renly.distancemeasure.DB.MySQLiteOpenHelper;
 import com.android.renly.distancemeasure.R;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -83,9 +89,9 @@ public class MainActivity extends Activity {
     /**
      * 测量结果:
      * 0 - 未测量
-     * 1 - 测量中
-     * 2 - 测量合格
-     * 3 - 测量失败
+     * 1 - 测量中...
+     * 2 - 驻车自动成功
+     * 3 - 驻车自动失败
      */
     private static final int NOT_MEASURE = 0;
     private static final int MEASUREING = 1;
@@ -93,14 +99,24 @@ public class MainActivity extends Activity {
     private static final int FAIL_MEASURE = 3;
     private int measureResult = NOT_MEASURE;
 
-    private String carid;
-    private String carDirection;
-    private int startDistance;
-    private int nowDistance;
-    private String result;
+    // 限制时间
+    private static final int END_TIME = 5;
+    // 限制长度
+    private static final int END_DISTANCE = 5;
+    // MAC地址
+    private String MACAddr = "20:18:06:14:10:73";
+
+    private String carid = "测试车牌000";
+    private String carDirection = "测试方向";
+    private int startDistance = 0;
+    private int nowDistance = 0;
     private String measureTime;
     private String theTime;
     private int theID;
+
+    private boolean isBlueToothConnected = false;
+    private boolean isFirstData = true;
+    private boolean isNewMeasure = true;
 
     private String[] keys = new String[]{
             "车牌/车架号：",
@@ -126,110 +142,45 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         unbinder = ButterKnife.bind(this);
-        initBluetooth();
         initData();
     }
 
     private BluetoothAdapter mBluetoothAdapter;
-    private BluetoothManager mBluetoothManager;
-    private BluetoothDevice bluetoothDevice;
-    private BluetoothGatt mBluetoothGatt;
-
-    /**
-     * 初始化蓝牙模块
-     */
-//    private void initBluetooth() {
-//        mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-//        mBluetoothManager = (BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
-//        if (mBluetoothAdapter == null){
-//            Toast.makeText(this, "当前手机不支持蓝牙功能", Toast.LENGTH_SHORT).show();
-//            finish();
-//        }
-//        if (!mBluetoothAdapter.isEnabled()) {
-//            //若没打开则打开蓝牙
-//            mBluetoothAdapter.enable();
-//            Toast.makeText(this, "打开蓝牙", Toast.LENGTH_SHORT).show();
-//        }
-////        bluetoothDevice = mBluetoothAdapter.getRemoteDevice("80:AD:16:DB:3B:4D");
-//        bluetoothDevice = mBluetoothAdapter.getRemoteDevice("AC:2B:6E:1F:CE:89");
-////        bluetoothDevice = mBluetoothAdapter.getRemoteDevice("20:18:06:14:10:73");
-//        //如果Gatt在运行,将其关闭
-//        if (mBluetoothGatt != null) {
-//            Log.e("print","mBluetoothGatt != null");
-//            mBluetoothGatt.disconnect();
-//            mBluetoothGatt.close();
-//            mBluetoothGatt = null;
-//        }
-//        //连接蓝牙设备并获取Gatt对象hhj
-//        mBluetoothGatt = bluetoothDevice.connectGatt(MainActivity.this, false, bluetoothGattCallback);
-//    }
-
-    /**
-     * 蓝牙返回数据函数
-     */
-//    private BluetoothGattCallback bluetoothGattCallback = new BluetoothGattCallback() {
-//        @Override
-//        public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
-//            if (newState == BluetoothProfile.STATE_CONNECTED){
-//                // 已连接状态，表明连接成功
-//                printLog("连接成功 newState=2");
-//
-//            }
-//            if(newState == BluetoothProfile.STATE_DISCONNECTED){
-//                printLog("连接失败 newState=0");
-//                return;
-//            }
-//
-//            gatt.disconnect();
-//            gatt.close();
-//            return;
-//        }
-//
-//        @Override
-//        public void onServicesDiscovered(BluetoothGatt gatt, int status) {
-//            //根据UUID获取Service中的Characteristic,并传入Gatt中
-////            BluetoothGattService bluetoothGattService = gatt.getService(UUID_SERVICE);
-////            BluetoothGattCharacteristic bluetoothGattCharacteristic = bluetoothGattService.getCharacteristic(UUID_NOTIFY);
-////
-////            boolean isConnect = gatt.setCharacteristicNotification(bluetoothGattCharacteristic, true);
-////            if (isConnect){
-////
-////            }else {
-////                Log.i("geanwen", "onServicesDiscovered: 设备一连接notify失败");
-////            }
-//            super.onServicesDiscovered(gatt, status);
-//        }
-//
-//        @Override
-//        public void onCharacteristicChanged(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic) {//数据改变
-//            super.onCharacteristicChanged(gatt, characteristic);
-//            String data = new String(characteristic.getValue());
-//            Log.i("print", "onCharacteristicChanged: " + data);
-//        }
-//    };
 
     private void initData() {
         title.setText("实验测量");
         Intent intent = getIntent();
-        if (intent.getBooleanExtra("isNewMeasure",false)){
+        isNewMeasure = intent.getBooleanExtra("isNewMeasure", false);
+        if (isNewMeasure) {
             // 新的实验
             values[0] = intent.getStringExtra("cardId");
+            carid = values[0];
             values[1] = intent.getStringExtra("direction");
-        }else{
+            carDirection = values[1];
+        } else {
             // 历史实验
-            values[0] = intent.getStringExtra("cardId");
-            values[1] = intent.getStringExtra("direction");
-            startDistance = intent.getIntExtra("startDirection",0);
+            carid = intent.getStringExtra("cardId");
+            carDirection = intent.getStringExtra("direction");
+            startDistance = intent.getIntExtra("startDirection", 0);
+            nowDistance = intent.getIntExtra("nowDirection", 0);
+            theID = intent.getIntExtra("theID", 0);
+            measureTime = intent.getStringExtra("measureTime");
+            MACAddr = intent.getStringExtra("MACAddr");
+            values[0] = carid;
+            values[1] = carDirection;
             values[2] = startDistance + "cm";
-            nowDistance = intent.getIntExtra("nowDirection",0);
             values[3] = nowDistance + "cm";
             values[4] = intent.getStringExtra("result");
+
             int x = nowDistance - startDistance;
             tvDistance.setText(x + " cm");
-            theID = intent.getIntExtra("theID",0);
+            timer.setBase(convertStrTimeToLong(measureTime));
+            timer.setText(measureTime);
 
-            State_btn_left = true;
-            ivLeftbtn.setImageDrawable(getDrawable(R.drawable.shape_btn_left_enable));
+            btnLeft.setClickable(false);
+            btnRight.setClickable(false);
+            ivLeftbtn.setImageDrawable(getDrawable(R.drawable.shape_btn_left_unenable));
+            ivRightbtn.setImageDrawable(getDrawable(R.drawable.shape_btn_left_unenable));
         }
         list = new ArrayList<>();
         for (int i = 0; i < keys.length; i++) {
@@ -246,10 +197,14 @@ public class MainActivity extends Activity {
     public void onViewClicked(View view) {
         switch (view.getId()) {
             case R.id.back:
-                finish();
+                if (isNewMeasure)
+                    finishMeasure();
+                else
+                    finish();
                 break;
             case R.id.btn_left:
-                recreateTimer();
+                if (State_btn_left)
+                    recreateTimer();
                 break;
             case R.id.btn_right:
                 if (!State_btn_right) {
@@ -264,18 +219,39 @@ public class MainActivity extends Activity {
     }
 
     /**
+     * 结束实验保存数据
+     */
+    private void finishMeasure() {
+        new AlertDialog.Builder(this)
+                .setTitle("保存此次实验数据吗？")
+                .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        saveMeasureData();
+                        finish();
+                    }
+                })
+                .setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        finish();
+                    }
+                })
+                .create()
+                .show();
+    }
+
+    /**
      * 复位计时器
      */
     private void recreateTimer() {
-        if (State_btn_left) {
-            tvDistance.setText("0 cm");
-            timer.setBase(SystemClock.elapsedRealtime()); //计数器清零
-            ivLeftbtn.setImageDrawable(getDrawable(R.drawable.shape_btn_left_unenable));
-            list.get(4).put("key","测量结果：");
-            list.get(4).put("value","未测量");
-            adapter.notifyDataSetChanged();
-        }
+        tvDistance.setText("0 cm");
+        timer.setBase(SystemClock.elapsedRealtime()); //计数器清零
+        ivLeftbtn.setImageDrawable(getDrawable(R.drawable.shape_btn_left_unenable));
+        list.get(4).put("value", "未测量");
         updateResult(NOT_MEASURE);
+
+        initBluetooth();
     }
 
     /**
@@ -289,6 +265,8 @@ public class MainActivity extends Activity {
         State_btn_left = true;
         ivLeftbtn.setImageDrawable(getDrawable(R.drawable.shape_btn_left_enable));
         tvDistance.setTextColor(getResources().getColor(R.color.text_color_sec));
+
+        stopBlutoothThread();
     }
 
     /**
@@ -297,7 +275,7 @@ public class MainActivity extends Activity {
     private void startTimer() {
         timer.setBase(convertStrTimeToLong(timer.getText().toString()));
         int hour = (int) ((SystemClock.elapsedRealtime() - timer.getBase()) / 1000 / 60);
-        timer.setFormat("0"+String.valueOf(hour)+":%s");
+        timer.setFormat("0" + String.valueOf(hour) + ":%s");
         timer.start();
         State_btn_right = true;
         tvRightbtn.setText("停止");
@@ -307,25 +285,26 @@ public class MainActivity extends Activity {
         ivLeftbtn.setImageDrawable(getDrawable(R.drawable.shape_btn_left_unenable));
 
         updateResult(MEASUREING);
+        initBluetooth();
     }
 
     /**
      * 更新测量结果
      */
     private void updateResult(int result) {
-        list.get(4).put("key","测量结果：");
-        switch (result){
+        list.get(4).put("key", "测量结果：");
+        switch (result) {
             case NOT_MEASURE:
-                list.get(4).put("value","未测量");
+                list.get(4).put("value", "未测量");
                 break;
             case MEASUREING:
-                list.get(4).put("value","测量中");
+                list.get(4).put("value", "测量中");
                 break;
             case SUCCESS_MEASURE:
-                list.get(4).put("value","测量成功");
+                list.get(4).put("value", "驻车自动成功");
                 break;
             case FAIL_MEASURE:
-                list.get(4).put("value","测量失败");
+                list.get(4).put("value", "驻车自动失败");
                 break;
         }
         adapter.notifyDataSetChanged();
@@ -333,55 +312,112 @@ public class MainActivity extends Activity {
 
     /**
      * 将String类型的时间转换成long,如：12:01:08
+     *
      * @param strTime String类型的时间
      * @return long类型的时间
-     * */
+     */
     protected long convertStrTimeToLong(String strTime) {
-        String []timeArry=strTime.split(":");
-        long longTime=0;
-        if (timeArry.length==2) {//如果时间是MM:SS格式
-            longTime=Integer.parseInt(timeArry[0])*1000*60+Integer.parseInt(timeArry[1])*1000;
-        }else if (timeArry.length==3){//如果时间是HH:MM:SS格式
-            longTime=Integer.parseInt(timeArry[0])*1000*60*60+Integer.parseInt(timeArry[1])
-                    *1000*60+Integer.parseInt(timeArry[2])*1000;
+        String[] timeArry = strTime.split(":");
+        long longTime = 0;
+        if (timeArry.length == 2) {//如果时间是MM:SS格式
+            longTime = Integer.parseInt(timeArry[0]) * 1000 * 60 + Integer.parseInt(timeArry[1]) * 1000;
+        } else if (timeArry.length == 3) {//如果时间是HH:MM:SS格式
+            longTime = Integer.parseInt(timeArry[0]) * 1000 * 60 * 60 + Integer.parseInt(timeArry[1])
+                    * 1000 * 60 + Integer.parseInt(timeArry[2]) * 1000;
         }
-        return SystemClock.elapsedRealtime()-longTime;
+        return SystemClock.elapsedRealtime() - longTime;
     }
 
-    private BroadcastReceiver mReceiver = new BroadcastReceiver() {
-        @Override
-        public void onReceive(Context context, Intent intent) {
+    private void printLog(String str) {
+        Log.e("print", str);
+    }
 
-        }
-    };
-
-    private void printLog(String str){
-        Log.e("print",str);
+    @Override
+    public void onBackPressed() {
+        if (isNewMeasure)
+            finishMeasure();
+        else
+            finish();
     }
 
     @Override
     protected void onDestroy() {
         unbinder.unbind();
+        stopBlutoothThread();
+        super.onDestroy();
+    }
+
+    private void stopBlutoothThread() {
         if (mConnectThread != null)
             mConnectThread.cancel();
         if (mConnectedThread != null)
             mConnectedThread.cancel();
-        saveMeasureData();
-        super.onDestroy();
     }
 
     private void saveMeasureData() {
-        // 需要重写
+        String result = "";
+        switch (measureResult) {
+            case 0:
+            case 1:
+                result = "测量中止";
+                break;
+            case 2:
+                result = "驻车自动测量成功";
+                break;
+            case 3:
+                result = "驻车自动测量失败";
+                break;
+        }
+
+        //获取当前时间
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy.MM.dd HH:mm:ss");// HH:mm:ss
+        Date date = new Date(System.currentTimeMillis());
+        theTime = simpleDateFormat.format(date);
+        measureTime = timer.getText().toString();
+        MeasureData data = new MeasureData(carid, carDirection, startDistance, nowDistance, result, measureTime, theTime);
+
+        MySQLiteOpenHelper mySQLiteOpenHelper = MySQLiteOpenHelper.getInstance(this);
+        SQLiteDatabase db = mySQLiteOpenHelper.getWritableDatabase();
+        synchronized (mySQLiteOpenHelper) {
+            db.beginTransaction();
+
+            db.execSQL(insertsql(data));
+
+            db.setTransactionSuccessful();
+            db.endTransaction();
+        }
+
+        db.close();
+        mySQLiteOpenHelper.close();
         setResult(RESULT_OK);
+    }
+
+    private String insertsql(MeasureData data) {
+        return "insert into " + MySQLiteOpenHelper.TABLE_NAME +
+                "(" + MySQLiteOpenHelper.carId + "," +
+                MySQLiteOpenHelper.carDirection + "," +
+                MySQLiteOpenHelper.startDistance + "," +
+                MySQLiteOpenHelper.nowDistance + "," +
+                MySQLiteOpenHelper.measureResult + "," +
+                MySQLiteOpenHelper.measureTime + "," +
+//                MySQLiteOpenHelper.theID + "," +
+                MySQLiteOpenHelper.theTime + ") values('" +
+                data.getCarId() + "','" +
+                data.getCarDirection() + "','" +
+                data.getStartDistance() + "','" +
+                data.getNowDistance() + "','" +
+                data.getResult() + "','" +
+                data.getMeasureTime() + "','" +
+//                data.getTheID() + "','" +
+                data.getTime() + "')";
     }
 
     private ConnectThread mConnectThread;
     public ConnectedThread mConnectedThread;
 
     private List<Integer> mBuffer;
-    private static final String SPP_UUID = "00001101-0000-1000-8000-00805F9B34FB";
 
-    public void initBluetooth(){
+    public void initBluetooth() {
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         // If the adapter is null, then Bluetooth is not supported
         if (mBluetoothAdapter == null) {
@@ -391,12 +427,11 @@ public class MainActivity extends Activity {
         }
 
         mBuffer = new ArrayList<Integer>();
-        BluetoothDevice bluetoothDevice = mBluetoothAdapter.getRemoteDevice("20:18:06:14:10:73");
+        BluetoothDevice bluetoothDevice = mBluetoothAdapter.getRemoteDevice(MACAddr);
         connect(bluetoothDevice);
     }
 
     public void connect(BluetoothDevice device) {
-        printLog("connnct()");
         printLog("connect to: " + device);
         // Start the thread to connect with the given device
         mConnectThread = new ConnectThread(device);
@@ -419,9 +454,9 @@ public class MainActivity extends Activity {
             // Get a BluetoothSocket for a connection with the
             // given BluetoothDevice
             try {
-                tmp = device.createRfcommSocketToServiceRecord(UUID.fromString(SPP_UUID));
+                tmp = device.createRfcommSocketToServiceRecord(UUID.fromString(App.SPP_UUID));
             } catch (IOException e) {
-                printLog("create() failed"+e);
+                printLog("create() failed" + e);
             }
             mmSocket = tmp;
         }
@@ -437,15 +472,18 @@ public class MainActivity extends Activity {
             try {
                 // This is a blocking call and will only return on a
                 // successful connection or an exception
+                isBlueToothConnected = true;
                 mmSocket.connect();
             } catch (IOException e) {
 
-                printLog("unable to connect() socket"+ e);
+                printLog("unable to connect() socket " + e);
+                handler.sendEmptyMessage(NOT_CONNECT);
+                isBlueToothConnected = false;
                 // Close the socket
                 try {
                     mmSocket.close();
                 } catch (IOException e2) {
-                    printLog("unable to close() socket during connection failure"+e2);
+                    printLog("unable to close() socket during connection failure" + e2);
                 }
                 return;
             }
@@ -464,7 +502,7 @@ public class MainActivity extends Activity {
             try {
                 mmSocket.close();
             } catch (IOException e) {
-                printLog("close() of connect socket failed"+e);
+                printLog("close() of connect socket failed" + e);
             }
         }
     }
@@ -489,7 +527,7 @@ public class MainActivity extends Activity {
                 tmpIn = socket.getInputStream();
                 tmpOut = socket.getOutputStream();
             } catch (IOException e) {
-                printLog("temp sockets not created"+e);
+                printLog("temp sockets not created" + e);
             }
 
             mmInStream = tmpIn;
@@ -497,6 +535,7 @@ public class MainActivity extends Activity {
         }
 
         public void run() {
+            handler.sendEmptyMessage(CONNECT_SUCCESS);
             printLog("BEGIN mConnectedThread");
             byte[] buffer = new byte[256];
             int bytes;
@@ -506,15 +545,31 @@ public class MainActivity extends Activity {
                 try {
                     // Read from the InputStream
                     bytes = mmInStream.read(buffer);
-                    synchronized (mBuffer) {
-                        for (int i = 0; i < bytes; i++) {
-                            mBuffer.add(buffer[i] & 0xFF);
+                    printLog(bytes + "bytes");
+                    if (isFirstData) {
+                        Message msg = new Message();
+                        msg.what = GET_FIRST_DATA;
+                        Bundle bundle = new Bundle();
+                        bundle.putInt("data", buffer[0]);
+                        msg.setData(bundle);
+                        handler.sendMessage(msg);
+                        isFirstData = false;
+                    } else {
+                        if (getMeasureTime() >= END_TIME) {
+                            // 如果已经达到限制时间
+                            Message msg = new Message();
+                            msg.what = GET_LAST_DATA;
+                            Bundle bundle = new Bundle();
+                            bundle.putInt("data", buffer[0]);
+                            msg.setData(bundle);
+                            handler.sendMessage(msg);
+                            break;
                         }
                     }
                     // mHandler.sendEmptyMessage(MSG_NEW_DATA);
                 } catch (IOException e) {
-                    printLog("disconnected"+e);
-                    break;
+                    printLog("disconnected " + e);
+                    handler.sendEmptyMessage(OUT_OF_CONNECTED);
                 }
             }
         }
@@ -522,8 +577,7 @@ public class MainActivity extends Activity {
         /**
          * Write to the connected OutStream.
          *
-         * @param buffer
-         *            The bytes to write
+         * @param buffer The bytes to write
          */
         public void write(byte[] buffer) {
             try {
@@ -542,5 +596,63 @@ public class MainActivity extends Activity {
         }
     }
 
+    /**
+     * 获取测量时间 s为单位
+     *
+     * @return
+     */
+    private int getMeasureTime() {
+        int totalss = 0;
+        String string = timer.getText().toString();
+        String[] split = string.split(":");
+        String string2 = split[0];
+        int hour = Integer.parseInt(string2);
+        int Hours = hour * 3600;
+        String string3 = split[1];
+        int min = Integer.parseInt(string3);
+        int Mins = min * 60;
+        int SS = Integer.parseInt(split[2]);
+        totalss = Hours + Mins + SS;
+        return totalss;
+    }
 
+    private static final int GET_FIRST_DATA = 512;
+    private static final int GET_LAST_DATA = 1024;
+    private static final int CONNECT_SUCCESS = 2048;
+    private static final int OUT_OF_CONNECTED = 4096;
+    private static final int NOT_CONNECT = 9192;
+
+    private Handler handler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case GET_FIRST_DATA:
+                    startDistance = msg.getData().getInt("data");
+                    list.get(2).put("value", startDistance + " cm");
+                    adapter.notifyDataSetChanged();
+                    break;
+                case GET_LAST_DATA:
+                    timer.stop();
+                    nowDistance = msg.getData().getInt("data");
+                    list.get(3).put("value", nowDistance + " cm");
+                    int x = nowDistance - startDistance;
+                    tvDistance.setText(x + " cm");
+                    if (x < END_DISTANCE && x >= 0)
+                        updateResult(SUCCESS_MEASURE);
+                    else
+                        updateResult(FAIL_MEASURE);
+                    stopBlutoothThread();
+                    break;
+                case CONNECT_SUCCESS:
+                    Toast.makeText(MainActivity.this, "蓝牙连接成功", Toast.LENGTH_SHORT).show();
+                    break;
+                case OUT_OF_CONNECTED:
+                    Toast.makeText(MainActivity.this, "蓝牙断开连接", Toast.LENGTH_SHORT).show();
+                    break;
+                case NOT_CONNECT:
+                    Toast.makeText(MainActivity.this, "蓝牙未连接", Toast.LENGTH_SHORT).show();
+                    break;
+            }
+        }
+    };
 }
