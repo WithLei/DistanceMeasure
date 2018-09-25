@@ -100,7 +100,7 @@ public class MainActivity extends Activity {
     private int measureResult = NOT_MEASURE;
 
     // 限制时间
-    private static final int END_TIME = 5;
+    private static final int END_TIME = 300;
     // 限制长度
     private static final int END_DISTANCE = 5;
     // MAC地址
