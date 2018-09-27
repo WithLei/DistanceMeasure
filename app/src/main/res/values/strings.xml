@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">驻车自动测试客户端</string>
+    <string name="app_name">驻车制动检验</string>
     <string name="MACAddr_default">20:18:06:14:10:73</string>
     <string name="notice">注意：此蓝牙MAC地址为测试用MAC地址，使用前先在系统蓝牙设置中连接HC-05，并核对MAC地址进行修改，英文需大写</string>
 </resources>
