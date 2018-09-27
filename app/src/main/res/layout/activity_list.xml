@@ -33,9 +33,9 @@
             android:src="@drawable/ic_add_black_24dp" />
 
     </FrameLayout>
-    <android.support.v7.widget.RecyclerView
-        android:id="@+id/recyclerView"
+    <com.baoyz.swipemenulistview.SwipeMenuListView
+        android:id="@+id/listView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="match_parent" />
 
 </LinearLayout>

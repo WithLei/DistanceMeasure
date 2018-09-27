@@ -26,6 +26,7 @@ import com.android.renly.distancemeasure.App;
 import com.android.renly.distancemeasure.Bean.MeasureData;
 import com.android.renly.distancemeasure.DB.MySQLiteOpenHelper;
 import com.android.renly.distancemeasure.R;
+import com.android.renly.distancemeasure.Utils.TimeUtil;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -134,8 +135,16 @@ public class MainActivity extends Activity {
             "未测量",
     };
 
+    private int[] imgs = new int[]{
+            R.drawable.ic_directions_car_black_24dp,
+            R.drawable.ic_swap_calls_black_24dp,
+            R.drawable.ic_alarm_black_24dp,
+            R.drawable.ic_alarm_on_black_24dp,
+            R.drawable.ic_chrome_reader_mode_black_24dp,
+    };
+
     private SimpleAdapter adapter;
-    private List<Map<String, String>> list;
+    private List<Map<String, Object>> list;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -143,6 +152,7 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
         unbinder = ButterKnife.bind(this);
         initData();
+        initBluetooth();
     }
 
     private BluetoothAdapter mBluetoothAdapter;
@@ -157,6 +167,7 @@ public class MainActivity extends Activity {
             carid = values[0];
             values[1] = intent.getStringExtra("direction");
             carDirection = values[1];
+            MACAddr = intent.getStringExtra("MACAddr");
         } else {
             // 历史实验
             carid = intent.getStringExtra("cardId");
@@ -165,7 +176,6 @@ public class MainActivity extends Activity {
             nowDistance = intent.getIntExtra("nowDirection", 0);
             theID = intent.getIntExtra("theID", 0);
             measureTime = intent.getStringExtra("measureTime");
-            MACAddr = intent.getStringExtra("MACAddr");
             values[0] = carid;
             values[1] = carDirection;
             values[2] = startDistance + " cm";
@@ -177,34 +187,39 @@ public class MainActivity extends Activity {
                 tvDistance.setText(x + " cm");
             else
                 tvDistance.setText("超限");
-            timer.setBase(convertStrTimeToLong(measureTime));
+            timer.setBase(TimeUtil.convertStrTimeToLong(measureTime));
             timer.setText(measureTime);
         }
         setBtnNotTouch();
 
         list = new ArrayList<>();
         for (int i = 0; i < keys.length; i++) {
-            Map<String, String> objectMap = new HashMap<>();
+            Map<String, Object> objectMap = new HashMap<>();
             objectMap.put("key", keys[i]);
             objectMap.put("value", values[i]);
+            objectMap.put("img",imgs[i]);
             list.add(objectMap);
         }
-        adapter = new SimpleAdapter(this, list, R.layout.item_data, new String[]{"key", "value"}, new int[]{R.id.key, R.id.value});
+        adapter = new SimpleAdapter(this, list, R.layout.item_data, new String[]{"key", "value", "img"}, new int[]{R.id.key, R.id.value, R.id.img});
         lvMain.setAdapter(adapter);
     }
 
     private void setBtnNotTouch() {
-        btnLeft.setClickable(false);
-        btnRight.setClickable(false);
-        ivLeftbtn.setImageDrawable(getDrawable(R.drawable.shape_btn_left_unenable));
-        ivRightbtn.setImageDrawable(getDrawable(R.drawable.shape_btn_left_unenable));
+        if (btnLeft != null && btnRight != null) {
+            btnLeft.setClickable(false);
+            btnRight.setClickable(false);
+            ivLeftbtn.setImageDrawable(getDrawable(R.drawable.shape_btn_left_unenable));
+            ivRightbtn.setImageDrawable(getDrawable(R.drawable.shape_btn_left_unenable));
+        }
     }
 
-    private void setBtnTouch(){
-        btnLeft.setClickable(true);
-        btnRight.setClickable(true);
-        ivLeftbtn.setImageDrawable(getDrawable(R.drawable.shape_btn_left_unenable));
-        ivRightbtn.setImageDrawable(getDrawable(R.drawable.shape_btn_right_normal));
+    private void setBtnTouch() {
+        if (btnLeft != null && btnRight != null) {
+            btnLeft.setClickable(true);
+            btnRight.setClickable(true);
+            ivLeftbtn.setImageDrawable(getDrawable(R.drawable.shape_btn_left_unenable));
+            ivRightbtn.setImageDrawable(getDrawable(R.drawable.shape_btn_right_normal));
+        }
     }
 
     @OnClick({R.id.back, R.id.btn_left, R.id.btn_right})
@@ -296,7 +311,7 @@ public class MainActivity extends Activity {
         // 开启线程
         handler.sendEmptyMessage(START_CONNECT);
 
-        timer.setBase(convertStrTimeToLong(timer.getText().toString()));
+        timer.setBase(TimeUtil.convertStrTimeToLong(timer.getText().toString()));
         int hour = (int) ((SystemClock.elapsedRealtime() - timer.getBase()) / 1000 / 60);
         timer.setFormat("0" + String.valueOf(hour) + ":%s");
         timer.start();
@@ -336,24 +351,6 @@ public class MainActivity extends Activity {
         adapter.notifyDataSetChanged();
     }
 
-    /**
-     * 将String类型的时间转换成long,如：12:01:08
-     *
-     * @param strTime String类型的时间
-     * @return long类型的时间
-     */
-    protected long convertStrTimeToLong(String strTime) {
-        String[] timeArry = strTime.split(":");
-        long longTime = 0;
-        if (timeArry.length == 2) {//如果时间是MM:SS格式
-            longTime = Integer.parseInt(timeArry[0]) * 1000 * 60 + Integer.parseInt(timeArry[1]) * 1000;
-        } else if (timeArry.length == 3) {//如果时间是HH:MM:SS格式
-            longTime = Integer.parseInt(timeArry[0]) * 1000 * 60 * 60 + Integer.parseInt(timeArry[1])
-                    * 1000 * 60 + Integer.parseInt(timeArry[2]) * 1000;
-        }
-        return SystemClock.elapsedRealtime() - longTime;
-    }
-
     private void printLog(String str) {
         Log.e("print", str);
     }
@@ -367,14 +364,9 @@ public class MainActivity extends Activity {
     }
 
     @Override
-    protected void onResume() {
-        initBluetooth();
-        super.onResume();
-    }
-
-    @Override
     protected void onDestroy() {
         unbinder.unbind();
+        handler.removeCallbacksAndMessages(null);
         stopBlutoothThread();
         super.onDestroy();
     }
@@ -390,6 +382,8 @@ public class MainActivity extends Activity {
         String result = "";
         switch (measureResult) {
             case 0:
+                result = "未测量";
+                break;
             case 1:
                 result = "测量中止";
                 break;
@@ -659,50 +653,51 @@ public class MainActivity extends Activity {
     private Handler handler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
-            switch (msg.what) {
-                case GET_FIRST_DATA:
-                    startDistance = msg.getData().getInt("data");
-                    list.get(2).put("value", startDistance + " cm");
-                    adapter.notifyDataSetChanged();
-                    break;
-                case GET_LAST_DATA:
-                    stopTimer();
-                    nowDistance = msg.getData().getInt("data");
-                    list.get(3).put("value", nowDistance + " cm");
-                    int x = nowDistance - startDistance;
-                    if (x <= 99)
-                        tvDistance.setText(x + " cm");
-                    else
-                        tvDistance.setText("超限");
-                    if (x < END_DISTANCE && x >= 0)
-                        updateResult(SUCCESS_MEASURE);
-                    else
-                        updateResult(FAIL_MEASURE);
-                    stopBlutoothThread();
-                    break;
-                case CONNECT_SUCCESS:
-                    isBlueToothConnected = true;
-                    setBtnTouch();
-                    Toast.makeText(MainActivity.this, "蓝牙连接成功", Toast.LENGTH_SHORT).show();
-                    break;
-                case OUT_OF_CONNECTED:
-                    isBlueToothConnected = false;
-                    setBtnNotTouch();
-                    if (timer.isActivated())
+            if (timer != null)
+                switch (msg.what) {
+                    case GET_FIRST_DATA:
+                        startDistance = msg.getData().getInt("data");
+                        list.get(2).put("value", startDistance + " cm");
+                        adapter.notifyDataSetChanged();
+                        break;
+                    case GET_LAST_DATA:
                         stopTimer();
-                    Toast.makeText(MainActivity.this, "蓝牙断开连接", Toast.LENGTH_SHORT).show();
-                    break;
-                case NOT_CONNECT:
-                    isBlueToothConnected = false;
-                    setBtnNotTouch();
-                    if (timer.isActivated())
-                        stopTimer();
-                    Toast.makeText(MainActivity.this, "蓝牙未连接", Toast.LENGTH_SHORT).show();
-                    break;
-                case START_CONNECT:
-                    mConnectedThread.start();
-                    break;
-            }
+                        nowDistance = msg.getData().getInt("data");
+                        list.get(3).put("value", nowDistance + " cm");
+                        int x = nowDistance - startDistance;
+                        if (x <= 99)
+                            tvDistance.setText(x + " cm");
+                        else
+                            tvDistance.setText("超限");
+                        if (x < END_DISTANCE && x >= 0)
+                            updateResult(SUCCESS_MEASURE);
+                        else
+                            updateResult(FAIL_MEASURE);
+                        stopBlutoothThread();
+                        break;
+                    case CONNECT_SUCCESS:
+                        isBlueToothConnected = true;
+                        setBtnTouch();
+                        Toast.makeText(MainActivity.this, "蓝牙连接成功", Toast.LENGTH_SHORT).show();
+                        break;
+                    case OUT_OF_CONNECTED:
+                        isBlueToothConnected = false;
+                        setBtnNotTouch();
+                        if (timer.isActivated())
+                            stopTimer();
+                        Toast.makeText(MainActivity.this, "蓝牙断开连接", Toast.LENGTH_SHORT).show();
+                        break;
+                    case NOT_CONNECT:
+                        isBlueToothConnected = false;
+                        setBtnNotTouch();
+                        if (timer.isActivated())
+                            stopTimer();
+                        Toast.makeText(MainActivity.this, "蓝牙未连接", Toast.LENGTH_SHORT).show();
+                        break;
+                    case START_CONNECT:
+                        mConnectedThread.start();
+                        break;
+                }
         }
     };
 }

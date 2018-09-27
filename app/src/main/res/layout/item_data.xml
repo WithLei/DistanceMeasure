@@ -5,11 +5,17 @@
     android:gravity="center_vertical"
     android:orientation="horizontal"
     android:padding="6dp">
+    <ImageView
+        android:id="@+id/img"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/ic_chrome_reader_mode_black_24dp"/>
 
     <TextView
         android:id="@+id/key"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginLeft="5dp"
         android:text="车牌/车架号："
         android:background="?attr/selectableItemBackground"
         android:textIsSelectable="true"
@@ -19,7 +25,7 @@
         android:id="@+id/value"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="5dp"
+        android:layout_marginLeft="5dp"
         android:text="浙A 123456"
         android:background="?attr/selectableItemBackground"
         android:textIsSelectable="true"
