@@ -1,5 +1,6 @@
 package com.android.renly.distancemeasure.Activity;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
@@ -152,7 +153,8 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
         unbinder = ButterKnife.bind(this);
         initData();
-        initBluetooth();
+        if (isNewMeasure)
+            initBluetooth();
     }
 
     private BluetoothAdapter mBluetoothAdapter;
@@ -197,7 +199,7 @@ public class MainActivity extends Activity {
             Map<String, Object> objectMap = new HashMap<>();
             objectMap.put("key", keys[i]);
             objectMap.put("value", values[i]);
-            objectMap.put("img",imgs[i]);
+            objectMap.put("img", imgs[i]);
             list.add(objectMap);
         }
         adapter = new SimpleAdapter(this, list, R.layout.item_data, new String[]{"key", "value", "img"}, new int[]{R.id.key, R.id.value, R.id.img});
@@ -218,7 +220,10 @@ public class MainActivity extends Activity {
             btnLeft.setClickable(true);
             btnRight.setClickable(true);
             ivLeftbtn.setImageDrawable(getDrawable(R.drawable.shape_btn_left_unenable));
-            ivRightbtn.setImageDrawable(getDrawable(R.drawable.shape_btn_right_normal));
+            if (tvRightbtn.getText().toString().equals("启动"))
+                ivRightbtn.setImageDrawable(getDrawable(R.drawable.shape_btn_right_normal));
+            else
+                ivRightbtn.setImageDrawable(getDrawable(R.drawable.shape_btn_right_press));
         }
     }
 
@@ -308,8 +313,22 @@ public class MainActivity extends Activity {
      * 开始计时
      */
     private void startTimer() {
-        // 开启线程
-        handler.sendEmptyMessage(START_CONNECT);
+//        // 开启线程
+        if (State_btn_left == true) {
+            BluetoothDevice bluetoothDevice = mBluetoothAdapter.getRemoteDevice(MACAddr);
+            connect(bluetoothDevice);
+        }
+        new Thread() {
+            @Override
+            public void run() {
+                while (true) {
+                    if (mConnectedThread != null) {
+                        mConnectedThread.start();
+                        break;
+                    }
+                }
+            }
+        }.start();
 
         timer.setBase(TimeUtil.convertStrTimeToLong(timer.getText().toString()));
         int hour = (int) ((SystemClock.elapsedRealtime() - timer.getBase()) / 1000 / 60);
@@ -372,11 +391,18 @@ public class MainActivity extends Activity {
     }
 
     private void stopBlutoothThread() {
-        if (mConnectThread != null)
+        if (mConnectThread != null) {
+            mConnectThread.interrupt();
             mConnectThread.cancel();
-        if (mConnectedThread != null)
+            mConnectThread = null;
+        }
+        if (mConnectedThread != null) {
+            mConnectedThread.interrupt();
             mConnectedThread.cancel();
+            mConnectedThread = null;
+        }
     }
+
 
     private void saveMeasureData() {
         String result = "";
@@ -488,6 +514,8 @@ public class MainActivity extends Activity {
         }
 
         public void run() {
+            if (Thread.interrupted())
+                return;
             printLog("BEGIN mConnectThread");
             setName("ConnectThread");
 
@@ -563,40 +591,59 @@ public class MainActivity extends Activity {
         }
 
         public void run() {
+            if (Thread.interrupted()) {
+                printLog("return");
+                return;
+            }
             printLog("BEGIN mConnectedThread");
             byte[] buffer = new byte[256];
             int bytes;
 
             // Keep listening to the InputStream while connected
             while (true) {
-                try {
-                    // Read from the InputStream
-                    bytes = mmInStream.read(buffer);
-                    printLog(bytes + "bytes");
-                    if (isFirstData) {
-                        Message msg = new Message();
-                        msg.what = GET_FIRST_DATA;
-                        Bundle bundle = new Bundle();
-                        bundle.putInt("data", buffer[0]);
-                        msg.setData(bundle);
-                        handler.sendMessage(msg);
-                        isFirstData = false;
-                    } else {
-                        if (getMeasureTime() >= END_TIME) {
-                            // 如果已经达到限制时间
+                synchronized (this) {
+                    try {
+                        // Read from the InputStream
+                        bytes = mmInStream.read(buffer);
+                        if (State_btn_left) {
+                            printLog("Thread.interrupted()");
+                            break;
+                        }
+                        printLog(bytes + "bytes");
+                        if (isFirstData) {
                             Message msg = new Message();
-                            msg.what = GET_LAST_DATA;
+                            msg.what = GET_FIRST_DATA;
                             Bundle bundle = new Bundle();
                             bundle.putInt("data", buffer[0]);
                             msg.setData(bundle);
                             handler.sendMessage(msg);
-                            break;
+                            isFirstData = false;
+                        } else {
+                            if (getMeasureTime() >= END_TIME) {
+                                // 如果已经达到限制时间
+                                Message msg = new Message();
+                                msg.what = GET_LAST_DATA;
+                                Bundle bundle = new Bundle();
+                                bundle.putInt("data", buffer[0]);
+                                msg.setData(bundle);
+                                handler.sendMessage(msg);
+                                break;
+                            } else {
+                                // 限制时间内
+                                Message msg = new Message();
+                                msg.what = GET_DATA;
+                                Bundle bundle = new Bundle();
+                                bundle.putInt("data", buffer[0]);
+                                msg.setData(bundle);
+                                handler.sendMessage(msg);
+                            }
                         }
+                        // mHandler.sendEmptyMessage(MSG_NEW_DATA);
+                    } catch (IOException e) {
+                        printLog("disconnected " + e);
+//                        handler.sendEmptyMessage(OUT_OF_CONNECTED);
+                        break;
                     }
-                    // mHandler.sendEmptyMessage(MSG_NEW_DATA);
-                } catch (IOException e) {
-                    printLog("disconnected " + e);
-                    handler.sendEmptyMessage(OUT_OF_CONNECTED);
                 }
             }
         }
@@ -649,12 +696,24 @@ public class MainActivity extends Activity {
     private static final int OUT_OF_CONNECTED = 4096;
     private static final int NOT_CONNECT = 9192;
     private static final int START_CONNECT = 256;
+    private static final int GET_DATA = 128;
 
+    @SuppressLint("HandlerLeak")
     private Handler handler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
             if (timer != null)
                 switch (msg.what) {
+                    case GET_DATA:
+                        nowDistance = msg.getData().getInt("data");
+                        list.get(3).put("value", nowDistance + " cm");
+                        adapter.notifyDataSetChanged();
+                        int x = nowDistance - startDistance;
+                        if (x <= 99)
+                            tvDistance.setText(x + " cm");
+                        else
+                            tvDistance.setText("超限");
+                        break;
                     case GET_FIRST_DATA:
                         startDistance = msg.getData().getInt("data");
                         list.get(2).put("value", startDistance + " cm");
@@ -664,12 +723,12 @@ public class MainActivity extends Activity {
                         stopTimer();
                         nowDistance = msg.getData().getInt("data");
                         list.get(3).put("value", nowDistance + " cm");
-                        int x = nowDistance - startDistance;
-                        if (x <= 99)
-                            tvDistance.setText(x + " cm");
+                        int xx = nowDistance - startDistance;
+                        if (xx <= 99)
+                            tvDistance.setText(xx + " cm");
                         else
                             tvDistance.setText("超限");
-                        if (x < END_DISTANCE && x >= 0)
+                        if (xx < END_DISTANCE && xx >= 0)
                             updateResult(SUCCESS_MEASURE);
                         else
                             updateResult(FAIL_MEASURE);
@@ -682,20 +741,17 @@ public class MainActivity extends Activity {
                         break;
                     case OUT_OF_CONNECTED:
                         isBlueToothConnected = false;
-                        setBtnNotTouch();
-                        if (timer.isActivated())
-                            stopTimer();
+                        if (!State_btn_left)
+                            setBtnNotTouch();
+                        stopTimer();
                         Toast.makeText(MainActivity.this, "蓝牙断开连接", Toast.LENGTH_SHORT).show();
                         break;
                     case NOT_CONNECT:
                         isBlueToothConnected = false;
-                        setBtnNotTouch();
-                        if (timer.isActivated())
-                            stopTimer();
+                        if (!State_btn_left)
+                            setBtnNotTouch();
+                        stopTimer();
                         Toast.makeText(MainActivity.this, "蓝牙未连接", Toast.LENGTH_SHORT).show();
-                        break;
-                    case START_CONNECT:
-                        mConnectedThread.start();
                         break;
                 }
         }

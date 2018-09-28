@@ -74,7 +74,7 @@ public class MyAdapter extends BaseAdapter {
         holder.result.setText(data.getResult());
         holder.time.setText(data.getTime());
         holder.name_preview.setTitleText(data.getCarId().charAt(0) + "");
-        holder.name_preview.setBackgroundColor(context.getResources().getColor(colors[pos]));
+        holder.name_preview.setBackgroundColor(context.getResources().getColor(colors[pos%11]));
         return view;
     }
 
