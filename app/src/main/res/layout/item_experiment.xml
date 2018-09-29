@@ -18,7 +18,7 @@
             android:layout_marginTop="10dp"
             app:rlv_backgroundColorValue="@color/colorAccent"
             app:rlv_titleColor="@android:color/white"
-            app:rlv_titleSize="35sp"
+            app:rlv_titleSize="30sp"
             app:rlv_titleText="A" />
 
         <LinearLayout

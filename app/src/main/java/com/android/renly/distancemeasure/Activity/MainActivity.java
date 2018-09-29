@@ -119,6 +119,7 @@ public class MainActivity extends Activity {
     private boolean isBlueToothConnected = false;
     private boolean isFirstData = true;
     private boolean isNewMeasure = true;
+    private boolean isCompleted = false;
 
     private String[] keys = new String[]{
             "车牌/车架号：",
@@ -307,6 +308,10 @@ public class MainActivity extends Activity {
         tvDistance.setTextColor(getResources().getColor(R.color.text_color_sec));
 
         stopBlutoothThread();
+        if (isCompleted){
+            ivRightbtn.setImageDrawable(getDrawable(R.drawable.shape_btn_left_unenable));
+            btnRight.setClickable(false);
+        }
     }
 
     /**
@@ -720,6 +725,7 @@ public class MainActivity extends Activity {
                         adapter.notifyDataSetChanged();
                         break;
                     case GET_LAST_DATA:
+                        isCompleted = true;
                         stopTimer();
                         nowDistance = msg.getData().getInt("data");
                         list.get(3).put("value", nowDistance + " cm");
@@ -732,7 +738,6 @@ public class MainActivity extends Activity {
                             updateResult(SUCCESS_MEASURE);
                         else
                             updateResult(FAIL_MEASURE);
-                        stopBlutoothThread();
                         break;
                     case CONNECT_SUCCESS:
                         isBlueToothConnected = true;
