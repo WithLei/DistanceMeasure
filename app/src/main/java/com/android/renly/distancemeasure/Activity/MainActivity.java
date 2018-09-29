@@ -300,12 +300,16 @@ public class MainActivity extends Activity {
      */
     private void stopTimer() {
         timer.stop();
+        State_btn_left = true;
         State_btn_right = false;
         tvRightbtn.setText("启动");
-        ivRightbtn.setImageDrawable(getDrawable(R.drawable.shape_btn_right_normal));
-        State_btn_left = true;
-        ivLeftbtn.setImageDrawable(getDrawable(R.drawable.shape_btn_left_enable));
-        tvDistance.setTextColor(getResources().getColor(R.color.text_color_sec));
+        if (isBlueToothConnected){
+            ivRightbtn.setImageDrawable(getDrawable(R.drawable.shape_btn_right_normal));
+            ivLeftbtn.setImageDrawable(getDrawable(R.drawable.shape_btn_left_enable));
+            tvDistance.setTextColor(getResources().getColor(R.color.text_color_sec));
+        }else{
+            setBtnNotTouch();
+        }
 
         stopBlutoothThread();
         if (isCompleted){
