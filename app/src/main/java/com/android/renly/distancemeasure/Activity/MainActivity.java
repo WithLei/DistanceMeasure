@@ -89,11 +89,11 @@ public class MainActivity extends Activity {
      */
     private boolean State_btn_right = false;
     /**
-     * 测量结果:
+     * 测验结果:
      * 0 - 未测量
      * 1 - 测量中...
-     * 2 - 驻车自动成功
-     * 3 - 驻车自动失败
+     * 2 - 合格
+     * 3 - 不合格
      */
     private static final int NOT_MEASURE = 0;
     private static final int MEASUREING = 1;
@@ -126,7 +126,7 @@ public class MainActivity extends Activity {
             "车辆朝向：",
             "初始时刻距离：",
             "目前距离：",
-            "测量结果：",
+            "测验结果：",
     };
 
     private String[] values = new String[]{
@@ -283,16 +283,6 @@ public class MainActivity extends Activity {
      */
     private void recreateTimer() {
         recreate();
-//        tvDistance.setText("0 cm");
-//        timer.setBase(SystemClock.elapsedRealtime()); //计数器清零
-//        ivLeftbtn.setImageDrawable(getDrawable(R.drawable.shape_btn_left_unenable));
-//        list.get(2).put("value","获取中...");
-//        list.get(3).put("value","获取中...");
-//        list.get(4).put("value", "未测量");
-//        isFirstData = true;
-//        updateResult(NOT_MEASURE);
-//
-//        initBluetooth();
     }
 
     /**
@@ -354,10 +344,9 @@ public class MainActivity extends Activity {
     }
 
     /**
-     * 更新测量结果
+     * 更新测验结果
      */
     private void updateResult(int result) {
-        list.get(4).put("key", "测量结果：");
         switch (result) {
             case NOT_MEASURE:
                 measureResult = NOT_MEASURE;
@@ -369,11 +358,11 @@ public class MainActivity extends Activity {
                 break;
             case SUCCESS_MEASURE:
                 measureResult = SUCCESS_MEASURE;
-                list.get(4).put("value", "驻车自动成功");
+                list.get(4).put("value", "合格");
                 break;
             case FAIL_MEASURE:
                 measureResult = FAIL_MEASURE;
-                list.get(4).put("value", "驻车自动失败");
+                list.get(4).put("value", "不合格");
                 break;
         }
         adapter.notifyDataSetChanged();
@@ -423,10 +412,10 @@ public class MainActivity extends Activity {
                 result = "测量中止";
                 break;
             case 2:
-                result = "驻车自动测量成功";
+                result = "合格";
                 break;
             case 3:
-                result = "驻车自动测量失败";
+                result = "不合格";
                 break;
         }
 

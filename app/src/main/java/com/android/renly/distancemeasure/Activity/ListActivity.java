@@ -10,6 +10,7 @@ import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
@@ -47,6 +48,8 @@ public class ListActivity extends Activity {
     ImageView ivToolbarMenu;
     @BindView(R.id.listView)
     SwipeMenuListView listView;
+    @BindView(R.id.swipeRefresh)
+    SwipeRefreshLayout swipeRefresh;
 
     private View dialogView;
     private EditText et_carId;
@@ -98,11 +101,11 @@ public class ListActivity extends Activity {
                     int startDistance = cursor.getInt(cursor.getColumnIndex(MySQLiteOpenHelper.startDistance));
                     int nowDistance = cursor.getInt(cursor.getColumnIndex(MySQLiteOpenHelper.nowDistance));
 
-                    Map<String, Object>items = new HashMap<String, Object>();
-                    items.put("carid",carid);
-                    items.put("measureTime",measureTime);
-                    items.put("result",result);
-                    items.put("time",theTime);
+                    Map<String, Object> items = new HashMap<String, Object>();
+                    items.put("carid", carid);
+                    items.put("measureTime", measureTime);
+                    items.put("result", result);
+                    items.put("time", theTime);
                     MeasureData data = new MeasureData(carid, carDirection, startDistance, nowDistance, result, measureTime, theTime, theID);
                     experimentList.add(data);
                 } while (cursor.moveToPrevious());
@@ -112,6 +115,25 @@ public class ListActivity extends Activity {
         db.endTransaction();
         db.close();
         mySQLiteOpenHelper.close();
+        new Thread(){
+            @Override
+            public void run() {
+                try {
+                    sleep(2000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                if (swipeRefresh.isRefreshing())
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            swipeRefresh.setRefreshing(false);
+
+                        }
+                    });
+            }
+        }.start();
+
     }
 
 
@@ -131,6 +153,8 @@ public class ListActivity extends Activity {
     }
 
     private void initView() {
+        initRefresh();
+
         SwipeMenuCreator creator = new SwipeMenuCreator() {
 
             @Override
@@ -157,7 +181,7 @@ public class ListActivity extends Activity {
 
         // Left
         listView.setSwipeDirection(SwipeMenuListView.DIRECTION_LEFT);
-        adapter = new MyAdapter(this,experimentList);
+        adapter = new MyAdapter(this, experimentList);
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int pos, long l) {
@@ -178,11 +202,21 @@ public class ListActivity extends Activity {
         listView.setOnMenuItemClickListener(new SwipeMenuListView.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(int position, SwipeMenu menu, int index) {
-                Log.e("print","delete " + position);
+                Log.e("print", "delete " + position);
                 deleteDB(experimentList.get(position));
                 experimentList.remove(position);
                 adapter.remove(position);
                 return false;
+            }
+        });
+    }
+
+    private void initRefresh() {
+        swipeRefresh.setColorSchemeResources(R.color.colorAccent);
+        swipeRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                initData();
             }
         });
     }

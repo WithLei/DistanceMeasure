@@ -75,7 +75,7 @@
                     style="@style/text_16_sec"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="测量结果：" />
+                    android:text="测验结果：" />
 
                 <TextView
                     android:id="@+id/result"

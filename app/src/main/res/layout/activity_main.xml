@@ -30,7 +30,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="80dp"
                 android:gravity="center_vertical"
-                android:text="滑动距离："
+                android:text="移动距离："
                 android:textColor="@color/gray_light"
                 android:textSize="35sp" />
 
