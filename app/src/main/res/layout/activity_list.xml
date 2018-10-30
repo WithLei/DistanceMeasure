@@ -10,6 +10,17 @@
         android:background="?android:attr/colorPrimary"
         android:elevation="4dp">
 
+        <ImageView
+            android:id="@+id/iv_toolbar_about"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_gravity="start"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true"
+            android:padding="13dp"
+            android:src="@drawable/ic_announcement_black_24dp" />
+
         <TextView
             android:id="@+id/title"
             android:layout_width="wrap_content"

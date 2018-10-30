@@ -258,9 +258,16 @@ public class ListActivity extends Activity {
                 .show();
     }
 
-    @OnClick(R.id.iv_toolbar_menu)
-    public void onViewClicked() {
-        initDialog();
+    @OnClick({R.id.iv_toolbar_menu, R.id.iv_toolbar_about})
+    public void onViewClicked(View view) {
+        switch (view.getId()){
+            case R.id.iv_toolbar_menu:
+                initDialog();
+                break;
+            case R.id.iv_toolbar_about:
+                startActivity(new Intent(this,AboutActivity.class));
+                break;
+        }
     }
 
     @Override

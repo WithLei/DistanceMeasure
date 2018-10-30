@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.design.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_primary"
+    android:fitsSystemWindows="false">
+
+    <FrameLayout
+        android:id="@+id/header"
+        android:layout_width="match_parent"
+        android:layout_height="180dp"
+        android:background="?attr/colorPrimary"
+        android:elevation="4dp">
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:scaleType="centerCrop"
+            android:src="@drawable/bg02" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:layout_margin="16dp"
+            android:textColor="@color/white"
+            android:text="@string/app_name"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <ImageView
+            android:id="@+id/btn_back"
+            android:layout_width="@dimen/toolbarHeight"
+            android:layout_height="@dimen/toolbarHeight"
+            android:layout_marginTop="24dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:padding="13dp"
+            android:src="@drawable/ic_arraw_back_white" />
+    </FrameLayout>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="200dp">
+
+        <TextView
+            android:id="@+id/tv_about_title"
+            style="@style/text_16_pri"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="驻车制动检验客户端"
+            android:textStyle="bold"
+            android:lineSpacingMultiplier="1.4"
+            android:padding="16dp" />
+
+        <TextView
+            android:id="@+id/tv_about_content"
+            style="@style/text_16_pri"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_about_title"
+            android:textIsSelectable="true"
+            android:text="功能不断完善中，bug较多还请多多反馈......\nbug反馈：\n"
+            android:lineSpacingMultiplier="1.4"
+            android:paddingLeft="16dp"
+            android:paddingRight="16dp"/>
+        <TextView
+            android:id="@+id/tv_about_url"
+            style="@style/text_16_pri"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/tv_about_content"
+            android:text="github提交 点击这儿"
+            android:textColor="@color/blue_light"
+            android:lineSpacingMultiplier="1.4"
+            android:paddingLeft="16dp"
+            android:paddingRight="16dp"/>
+
+        <TextView
+            android:id="@+id/version"
+            android:textSize="14sp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_above="@+id/server_version"
+            android:layout_centerHorizontal="true"
+            android:gravity="center"
+            tools:text="版本2.3.0" />
+
+        <TextView
+            android:id="@+id/server_version"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true"
+            android:layout_marginBottom="16dp"
+            android:layout_marginTop="4dp"
+            android:gravity="center"
+            android:textColor="@color/colorAuthor"
+            android:textSize="14sp"
+            tools:text="检查新版本中......" />
+
+    </RelativeLayout>
+
+</android.support.design.widget.CoordinatorLayout>
